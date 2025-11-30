@@ -1,0 +1,11 @@
+node_modules
+src
+.vscode
+.idea
+*.log
+.DS_Store
+tsconfig.json
+vite.config.ts
+.gitignore
+.npmignore
+
