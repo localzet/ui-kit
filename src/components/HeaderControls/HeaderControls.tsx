@@ -1,5 +1,4 @@
 import { BoxProps, Group } from '@mantine/core'
-import { ReactNode } from 'react'
 
 import { GithubControl } from './GithubControl'
 import { TelegramControl } from './TelegramControl'

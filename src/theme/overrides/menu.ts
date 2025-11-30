@@ -1,6 +1,6 @@
-import { Combobox, Menu } from '@mantine/core'
+import { Combobox, Menu, MantineComponent } from '@mantine/core'
 
-export default {
+const menuOverrides: Record<string, MantineComponent<any>> = {
     Menu: Menu.extend({
         defaultProps: {
             shadow: 'lg',
@@ -30,4 +30,6 @@ export default {
         }
     })
 }
+
+export default menuOverrides
 

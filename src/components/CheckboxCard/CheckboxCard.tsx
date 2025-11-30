@@ -1,8 +1,8 @@
-import { Checkbox, CheckboxCardProps, CheckboxProps, Group, Text } from '@mantine/core'
+import { Checkbox, CheckboxCardProps, Group, Text } from '@mantine/core'
 
 import classes from './CheckboxCard.module.css'
 
-export interface CheckboxCardComponentProps extends CheckboxCardProps, CheckboxProps {
+export interface CheckboxCardComponentProps extends CheckboxCardProps {
     label?: string
     description?: string
 }

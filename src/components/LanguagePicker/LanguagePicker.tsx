@@ -1,6 +1,5 @@
 import { ActionIcon, Menu, Text, useDirection } from '@mantine/core'
 import { TbLanguage } from 'react-icons/tb'
-import { useEffect } from 'react'
 
 export interface Language {
     label: string
@@ -10,7 +9,6 @@ export interface Language {
 
 export interface LanguagePickerProps {
     languages?: Language[]
-    currentLanguage?: string
     onLanguageChange?: (language: string) => void
     defaultLanguages?: Language[]
 }
@@ -24,7 +22,6 @@ const DEFAULT_LANGUAGES: Language[] = [
 
 export function LanguagePicker({
     languages,
-    currentLanguage,
     onLanguageChange,
     defaultLanguages = DEFAULT_LANGUAGES
 }: LanguagePickerProps) {

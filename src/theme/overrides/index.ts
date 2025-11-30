@@ -1,3 +1,4 @@
+import { MantineComponent } from '@mantine/core'
 import loadingOverlay from './loading-overlay'
 import ringProgress from './ring-progress'
 import notification from './notification'
@@ -13,7 +14,7 @@ import table from './table'
 import card from './card'
 import menu from './menu'
 
-export default {
+const overrides: Record<string, MantineComponent<any>> = {
     ...card,
     ...badge,
     ...breadcrumbs,
@@ -29,4 +30,6 @@ export default {
     ...tooltip,
     ...layouts
 }
+
+export default overrides
 

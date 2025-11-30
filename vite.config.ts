@@ -42,7 +42,7 @@ export default defineConfig({
           '@mantine/hooks': 'MantineHooks'
         },
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name === 'style.css') return 'styles.css'
+          if (assetInfo.name === 'style.css' || assetInfo.name === 'ui-kit.css') return 'styles.css'
           return assetInfo.name || 'asset'
         }
       }
