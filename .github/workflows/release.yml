@@ -4,58 +4,13 @@ on:
   release:
     types: [created]
 
-permissions:
-  contents: read
-  packages: write
-  id-token: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    
     outputs:
       version: ${{ steps.version.outputs.version }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Extract version from tag
-        id: version
-        shell: bash
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          TAG="${TAG#v}"
-          VERSION="${TAG%-dev}"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Sync package.json version
-        run: |
-          node -e "
-            const fs = require('fs');
-            const pkg = JSON.parse(fs.readFileSync('package.json'));
-            pkg.version = '${{ steps.version.outputs.version }}';
-            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-          "
-
-      - run: npm ci
-      - run: npm run build
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: |
-            dist
-            package.json
-            package-lock.json
-            README.md
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
+      
     permissions: 
       contents: read
       packages: write
@@ -77,21 +32,41 @@ jobs:
     env:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+      
     steps:
-      - uses: actions/checkout@v4
-  
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-  
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          # Remove -dev suffix if present for npm
+          NPM_VERSION=${VERSION%-dev}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "npm_version=$NPM_VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION, NPM Version: $NPM_VERSION"
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: ${{ matrix.registry }}
           scope: ${{ matrix.scope }}
           cache: npm
-  
+
+      - name: Sync package.json version
+        run: |
+          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '${{ steps.version.outputs.npm_version }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
+          cat package.json | grep '"version"'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
       - name: Publish to ${{ matrix.name }}
         if: env[matrix.token_env] != ''
         run: npm publish --provenance --access public
@@ -100,7 +75,7 @@ jobs:
 
   notify:
     if: always()
-    needs: [build, publish]
+    needs: [build]
     runs-on: ubuntu-latest
   
     env:
