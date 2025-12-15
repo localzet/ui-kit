@@ -1,34 +1,43 @@
-name: Build and Publish to Registries
+name: Build & Publish JS Library
 
 on:
   release:
     types: [created]
 
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      npm_version: ${{ steps.version.outputs.npm_version }}
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - id: version
+      - name: Extract version from tag
+        id: version
+        shell: bash
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          VERSION=${VERSION#v}
-          echo "npm_version=${VERSION%-dev}" >> $GITHUB_OUTPUT
+          TAG="${GITHUB_REF#refs/tags/}"
+          TAG="${TAG#v}"
+          VERSION="${TAG%-dev}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - run: |
+      - name: Sync package.json version
+        run: |
           node -e "
             const fs = require('fs');
             const pkg = JSON.parse(fs.readFileSync('package.json'));
-            pkg.version = '${{ steps.version.outputs.npm_version }}';
+            pkg.version = '${{ steps.version.outputs.version }}';
             fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
 
@@ -37,7 +46,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dist
+          name: package
           path: |
             dist
             package.json
@@ -47,40 +56,70 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
 
     strategy:
+      fail-fast: false
       matrix:
-        registry: [npm, github]
+        include:
+          - name: npm
+            registry: https://registry.npmjs.org
+            token: NPM_TOKEN
+            scope: ""
+          - name: github
+            registry: https://npm.pkg.github.com
+            token: GITHUB_TOKEN
+            scope: "@${{ github.repository_owner }}"
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
         with:
-          name: dist
+          name: package
 
-      - name: Setup Node (npmjs)
-        if: matrix.registry == 'npm'
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org
+          registry-url: ${{ matrix.registry }}
+          scope: ${{ matrix.scope }}
           cache: npm
 
-      - name: Setup Node (GitHub Packages)
-        if: matrix.registry == 'github'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: https://npm.pkg.github.com
-          scope: "@${{ github.repository_owner }}"
-          cache: npm
-
-      - name: Publish
+      - name: Publish to ${{ matrix.name }}
+        if: secrets[matrix.token] != ''
         run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ matrix.registry == 'npm' && secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets[matrix.token] }}
+
+  notify:
+    if: always()
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Telegram notification
+        if: secrets.TG_BOT_TOKEN != '' && secrets.TG_CHAT_ID != ''
+        run: |
+          STATUS="✅ Success"
+          if [[ "${{ needs.build.result }}" != "success" || "${{ needs.publish.result }}" != "success" ]]; then
+            STATUS="❌ Failed"
+          fi
+
+          MESSAGE=$(cat <<EOF
+          *CI/CD result*
+          Repo: \`${{ github.repository }}\`
+          Version: \`${{ needs.build.outputs.version || 'unknown' }}\`
+          Status: *$STATUS*
+
+          Build: \`${{ needs.build.result }}\`
+          Publish: \`${{ needs.publish.result }}\`
+
+          Ref: \`${{ github.ref_name }}\`
+          Commit: \`${{ github.sha }}\`
+          EOF
+          )
+
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TG_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TG_CHAT_ID }} \
+            -d parse_mode=Markdown \
+            --data-urlencode "text=$MESSAGE"
