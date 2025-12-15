@@ -42,7 +42,6 @@ jobs:
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
           VERSION=${VERSION#v}
-          # Remove -dev suffix if present for npm
           NPM_VERSION=${VERSION%-dev}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "npm_version=$NPM_VERSION" >> $GITHUB_OUTPUT
@@ -58,8 +57,8 @@ jobs:
 
       - name: Sync package.json version
         run: |
-          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version = '${{ steps.version.outputs.npm_version }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');"
-          cat package.json | grep '"version"'
+          node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); pkg.version='${{ steps.version.outputs.npm_version }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2)+'\n');"
+          grep '"version"' package.json
 
       - name: Install dependencies
         run: npm ci
@@ -68,14 +67,14 @@ jobs:
         run: npm run build
 
       - name: Publish to ${{ matrix.name }}
-        if: env[matrix.token_env] != ''
+        if: ${{ env[matrix.token_env] != '' }}
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ env[matrix.token_env] }}
 
   notify:
     if: always()
-    needs: [build]
+    needs: build
     runs-on: ubuntu-latest
   
     env:
@@ -84,29 +83,28 @@ jobs:
   
     steps:
       - name: Telegram notification
-        if: env.TG_BOT_TOKEN != '' && env.TG_CHAT_ID != ''
+        if: ${{ env.TG_BOT_TOKEN != '' && env.TG_CHAT_ID != '' }}
         run: |
           STATUS="✅ Success"
-          if [[ "${{ needs.build.result }}" != "success" || "${{ needs.publish.result }}" != "success" ]]; then
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
             STATUS="❌ Failed"
           fi
-  
+
+          BUILD_RESULT="${{ needs.build.result }}"
           MESSAGE=$(cat <<EOF
-          *CI/CD result*
-          Repo: \`${{ github.repository }}\`
-          Version: \`${{ needs.build.outputs.version || 'unknown' }}\`
-          Status: *$STATUS*
-  
-          Build: \`${{ needs.build.result }}\`
-          Publish: \`${{ needs.publish.result }}\`
-  
-          Ref: \`${{ github.ref_name }}\`
-          Commit: \`${{ github.sha }}\`
-          EOF
+*CI/CD result*
+Repo: \`${{ github.repository }}\`
+Version: \`${{ needs.build.outputs.version }}\`
+Status: *$STATUS*
+
+Build: \`$BUILD_RESULT\`
+
+Ref: \`${{ github.ref_name }}\`
+Commit: \`${{ github.sha }}\`
+EOF
           )
-  
+
           curl -s -X POST https://api.telegram.org/bot$TG_BOT_TOKEN/sendMessage \
             -d chat_id=$TG_CHAT_ID \
             -d parse_mode=Markdown \
             --data-urlencode "text=$MESSAGE"
-
