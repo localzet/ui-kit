@@ -810,6 +810,7 @@ export function App() {
             <Page appName="Localzet UI Kit" title={`${pageMeta.title} Demo`}>
                 <AppShell
                     header={{ height: 64 }}
+                    layout="alt"
                     navbar={{
                         width: 280,
                         breakpoint: 'md',

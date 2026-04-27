@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
 :root {
     color-scheme: dark;
 }
@@ -8,7 +10,7 @@
 
 body {
     margin: 0;
-    font-family: Montserrat, Vazirmatn, sans-serif;
+    font-family: Nunito, Montserrat, Vazirmatn, sans-serif;
     background: #0d1117;
     color: #c9d1d9;
 }
