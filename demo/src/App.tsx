@@ -11,18 +11,19 @@ import {
     Group,
     Menu,
     Modal,
+    NavLink,
     Paper,
     ScrollArea,
     SimpleGrid,
     Stack,
     Text,
     TextInput,
-    Title,
-    UnstyledButton
+    Title
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import {
     PiArrowClockwise,
+    PiArrowRight,
     PiChartBar,
     PiCheckCircle,
     PiCloud,
@@ -102,6 +103,23 @@ type DemoPage = {
     title: string
 }
 
+type DemoMenuSection = {
+    header: string
+    id: string
+    section: {
+        dropdownItems?: {
+            icon?: React.ComponentType<{ size?: number }>
+            id: string
+            name: string
+            page: DemoPageKey
+        }[]
+        icon: React.ComponentType<{ size?: number }>
+        id: string
+        name: string
+        page: DemoPageKey
+    }[]
+}
+
 const DEMO_PAGES: DemoPage[] = [
     {
         key: 'foundations',
@@ -132,6 +150,71 @@ const DEMO_PAGES: DemoPage[] = [
         title: 'Layouts & Empty States',
         description: 'Page composition and structural blocks',
         icon: <PiSquaresFour size={16} />
+    }
+]
+
+const DEMO_MENU: DemoMenuSection[] = [
+    {
+        header: 'Overview',
+        id: 'overview',
+        section: [
+            {
+                id: 'foundations',
+                name: 'Foundations',
+                icon: PiSquaresFour,
+                page: 'foundations'
+            }
+        ]
+    },
+    {
+        header: 'Catalog',
+        id: 'catalog',
+        section: [
+            {
+                id: 'forms',
+                name: 'Data Entry',
+                icon: PiSliders,
+                page: 'forms'
+            },
+            {
+                id: 'analytics',
+                name: 'Analytics & Data',
+                icon: PiChartBar,
+                page: 'analytics',
+                dropdownItems: [
+                    {
+                        id: 'analytics-metrics',
+                        name: 'Metrics',
+                        icon: PiChartBar,
+                        page: 'analytics'
+                    },
+                    {
+                        id: 'analytics-tables',
+                        name: 'Tables & DnD',
+                        icon: PiList,
+                        page: 'analytics'
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        header: 'Experience',
+        id: 'experience',
+        section: [
+            {
+                id: 'overlays',
+                name: 'Overlays',
+                icon: PiInfo,
+                page: 'overlays'
+            },
+            {
+                id: 'layouts',
+                name: 'Layouts',
+                icon: PiLayout,
+                page: 'layouts'
+            }
+        ]
     }
 ]
 
@@ -241,28 +324,58 @@ export function App() {
     }
 
     const nav = (
-        <Stack gap="xs" p="sm">
-            {DEMO_PAGES.map((page) => (
-                <UnstyledButton
-                    className="demo-nav-item"
-                    data-active={activePage === page.key}
-                    key={page.key}
-                    onClick={() => handlePageChange(page.key)}
-                >
-                    <Group align="flex-start" gap="xs" wrap="nowrap">
-                        <ActionIcon color="gray" radius="md" size="md" variant="subtle">
-                            {page.icon}
-                        </ActionIcon>
-                        <div>
-                            <Text fw={600} size="sm">
-                                {page.title}
-                            </Text>
-                            <Text c="dimmed" size="xs">
-                                {page.description}
-                            </Text>
-                        </div>
-                    </Group>
-                </UnstyledButton>
+        <Stack gap="md" pb="md" pt="md">
+            {DEMO_MENU.map((section, index) => (
+                <Box key={section.id}>
+                    {index > 0 && <Divider color="cyan.4" mb="lg" opacity={0.3} variant="dashed" />}
+                    <Title className="demo-section-title" order={6}>
+                        {section.header}
+                    </Title>
+
+                    <Stack gap={1}>
+                        {section.section.map((subItem) =>
+                            subItem.dropdownItems ? (
+                                <NavLink
+                                    active={false}
+                                    childrenOffset={0}
+                                    className="demo-section-link"
+                                    key={subItem.id}
+                                    label={subItem.name}
+                                    leftSection={<subItem.icon size={20} />}
+                                    variant="light"
+                                >
+                                    {subItem.dropdownItems.map((dropdownItem) => (
+                                        <NavLink
+                                            active={activePage === dropdownItem.page}
+                                            className="demo-section-dropdown-link"
+                                            key={dropdownItem.id}
+                                            label={dropdownItem.name}
+                                            leftSection={
+                                                dropdownItem.icon ? (
+                                                    <dropdownItem.icon size={18} />
+                                                ) : (
+                                                    <PiArrowRight size={18} />
+                                                )
+                                            }
+                                            onClick={() => handlePageChange(dropdownItem.page)}
+                                            variant="subtle"
+                                        />
+                                    ))}
+                                </NavLink>
+                            ) : (
+                                <NavLink
+                                    active={activePage === subItem.page}
+                                    className="demo-section-link"
+                                    key={subItem.id}
+                                    label={subItem.name}
+                                    leftSection={<subItem.icon size={20} />}
+                                    onClick={() => handlePageChange(subItem.page)}
+                                    variant="subtle"
+                                />
+                            )
+                        )}
+                    </Stack>
+                </Box>
             ))}
         </Stack>
     )
@@ -735,8 +848,8 @@ export function App() {
                         </Group>
                     </AppShell.Header>
 
-                    <AppShell.Navbar>
-                        <AppShell.Section>
+                    <AppShell.Navbar className="demo-sidebar-wrapper" p="md" pb={0} withBorder={false}>
+                        <AppShell.Section className="demo-logo-section">
                             <div className="demo-sidebar-brand">
                                 <Group gap="sm" wrap="nowrap">
                                     <SidebarLogo
@@ -769,6 +882,9 @@ export function App() {
                                     Основное меню
                                 </Text>
                             </div>
+                        </AppShell.Section>
+
+                        <AppShell.Section className="demo-scroll-area" component={ScrollArea} flex={1} scrollbarSize="0.2rem">
                             {nav}
                         </AppShell.Section>
                     </AppShell.Navbar>
