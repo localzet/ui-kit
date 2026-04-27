@@ -809,14 +809,14 @@ export function App() {
 
             <Page appName="Localzet UI Kit" title={`${pageMeta.title} Demo`}>
                 <AppShell
-                    header={{ height: 64 }}
+                    header={{ height: 64, offset: false }}
                     layout="alt"
                     navbar={{
-                        width: 280,
-                        breakpoint: 'md',
+                        width: 300,
+                        breakpoint: 'lg',
                         collapsed: { mobile: !mobileNavOpened }
                     }}
-                    padding="md"
+                    padding="xl"
                 >
                     <AppShell.Header>
                         <Group className="demo-header" justify="space-between" px="md">
@@ -849,7 +849,7 @@ export function App() {
                         </Group>
                     </AppShell.Header>
 
-                    <AppShell.Navbar className="demo-sidebar-wrapper" p="md" pb={0} withBorder={false}>
+                    <AppShell.Navbar className="demo-sidebar-wrapper" p="md" pb={0} w={300} withBorder={false}>
                         <AppShell.Section className="demo-logo-section">
                             <div className="demo-sidebar-brand">
                                 <Group gap="sm" wrap="nowrap">
@@ -890,7 +890,7 @@ export function App() {
                         </AppShell.Section>
                     </AppShell.Navbar>
 
-                    <AppShell.Main>
+                    <AppShell.Main pb="var(--mantine-spacing-md)" pt="calc(var(--app-shell-header-height) + 10px)">
                         <Stack gap="md">
                             <PageHeader
                                 description={pageMeta.description}
