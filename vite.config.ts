@@ -30,6 +30,11 @@ export default defineConfig({
         '@mantine/dates',
         '@mantine/nprogress',
         '@tabler/icons-react',
+        '@dnd-kit/core',
+        '@dnd-kit/modifiers',
+        '@dnd-kit/sortable',
+        'react-virtuoso',
+        'react-country-flag',
         'react-icons',
         'react-icons/go',
         'clsx'
