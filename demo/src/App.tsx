@@ -814,7 +814,7 @@ export function App() {
                     navbar={{
                         width: 300,
                         breakpoint: 'lg',
-                        collapsed: { mobile: !mobileNavOpened }
+                        collapsed: { mobile: !mobileNavOpened, desktop: false }
                     }}
                     padding="xl"
                 >
@@ -822,7 +822,7 @@ export function App() {
                         <Group className="demo-header" justify="space-between" px="md">
                             <Group gap="sm">
                                 <Burger
-                                    hiddenFrom="md"
+                                    hiddenFrom="lg"
                                     onClick={mobileNavHandlers.toggle}
                                     opened={mobileNavOpened}
                                     size="sm"
