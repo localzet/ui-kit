@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
     ActionIcon,
+    AppShell,
     Badge,
     Box,
+    Burger,
     Button,
     Divider,
     Drawer,
@@ -15,8 +17,10 @@ import {
     Stack,
     Text,
     TextInput,
-    Title
+    Title,
+    UnstyledButton
 } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import {
     PiArrowClockwise,
     PiChartBar,
@@ -33,7 +37,8 @@ import {
     PiRocket,
     PiSliders,
     PiSquaresFour,
-    PiUsers
+    PiUsers,
+    PiWaveSine
 } from 'react-icons/pi'
 import { TbServer, TbStack2 } from 'react-icons/tb'
 
@@ -88,11 +93,68 @@ type GridItem = {
     status: 'active' | 'disabled'
 }
 
-function DemoCard({ title, children }: { title: string; children: React.ReactNode }) {
+type DemoPageKey = 'analytics' | 'forms' | 'foundations' | 'layouts' | 'overlays'
+
+type DemoPage = {
+    description: string
+    key: DemoPageKey
+    title: string
+}
+
+const DEMO_PAGES: DemoPage[] = [
+    {
+        key: 'foundations',
+        title: 'Foundations',
+        description: 'Navigation, page chrome and base UI primitives'
+    },
+    {
+        key: 'forms',
+        title: 'Data Entry',
+        description: 'Inputs and selection controls'
+    },
+    {
+        key: 'analytics',
+        title: 'Analytics & Data',
+        description: 'Metrics, cards, tables and sortable collections'
+    },
+    {
+        key: 'overlays',
+        title: 'Feedback & Overlays',
+        description: 'Progress, modals, drawers and contextual helpers'
+    },
+    {
+        key: 'layouts',
+        title: 'Layouts & Empty States',
+        description: 'Page composition and structural blocks'
+    }
+]
+
+function getPageFromHash(): DemoPageKey {
+    const raw = window.location.hash.replace('#', '')
+    const match = DEMO_PAGES.find((page) => page.key === raw)
+    return match?.key || 'foundations'
+}
+
+function DemoCard({
+    title,
+    description,
+    children
+}: {
+    children: React.ReactNode
+    description?: string
+    title: string
+}) {
     return (
         <Paper p="md" radius="md" withBorder>
-            <Stack gap="md">
-                <Title order={4}>{title}</Title>
+            <Stack gap="sm">
+                <div>
+                    <Title order={4}>{title}</Title>
+                    {description && (
+                        <Text c="dimmed" mt={2} size="sm">
+                            {description}
+                        </Text>
+                    )}
+                </div>
                 <div className="demo-preview">{children}</div>
             </Stack>
         </Paper>
@@ -108,6 +170,9 @@ export function App() {
     const [tagValue, setTagValue] = useState<string | null>('PRO')
     const [chipValues, setChipValues] = useState<string[]>(['metrics'])
     const [checkboxChecked, setCheckboxChecked] = useState(true)
+    const [activePage, setActivePage] = useState<DemoPageKey>(() => getPageFromHash())
+    const [mobileNavOpened, mobileNavHandlers] = useDisclosure(false)
+
     const [items, setItems] = useState<GridItem[]>([
         { uuid: 'node-1', title: 'Node Alpha', status: 'active' },
         { uuid: 'node-2', title: 'Node Beta', status: 'disabled' },
@@ -116,6 +181,15 @@ export function App() {
         { uuid: 'node-5', title: 'Node Epsilon', status: 'disabled' },
         { uuid: 'node-6', title: 'Node Zeta', status: 'active' }
     ])
+
+    useEffect(() => {
+        const onHashChange = () => {
+            setActivePage(getPageFromHash())
+        }
+
+        window.addEventListener('hashchange', onHashChange)
+        return () => window.removeEventListener('hashchange', onHashChange)
+    }, [])
 
     useEffect(() => {
         if (!showLandscapePreview) {
@@ -152,33 +226,43 @@ export function App() {
         []
     )
 
-    return (
-        <div className="demo-shell">
-            <LoadingProgress start={loadingProgressActive} />
+    const pageMeta = DEMO_PAGES.find((page) => page.key === activePage) || DEMO_PAGES[0]
 
-            <Page appName="Localzet UI Kit" title="Components Demo">
-                <Stack gap="lg">
-                    <PageHeader
-                        actions={
-                            <Group>
-                                <Button onClick={() => setModalOpened(true)} size="xs" variant="light">
-                                    Modal demo
-                                </Button>
-                                <Button onClick={() => setDrawerOpened(true)} size="xs" variant="light">
-                                    Drawer demo
-                                </Button>
-                            </Group>
-                        }
-                        description="Каталог компонентов библиотеки"
-                        icon={<PiSquaresFour size={18} />}
-                        title="Localzet UI Kit"
-                    />
+    const handlePageChange = (key: DemoPageKey) => {
+        setActivePage(key)
+        window.location.hash = key
+        mobileNavHandlers.close()
+    }
 
+    const nav = (
+        <Stack gap="xs" p="sm">
+            {DEMO_PAGES.map((page) => (
+                <UnstyledButton
+                    className="demo-nav-item"
+                    data-active={activePage === page.key}
+                    key={page.key}
+                    onClick={() => handlePageChange(page.key)}
+                >
+                    <Text fw={600} size="sm">
+                        {page.title}
+                    </Text>
+                    <Text c="dimmed" size="xs">
+                        {page.description}
+                    </Text>
+                </UnstyledButton>
+            ))}
+        </Stack>
+    )
+
+    const foundationsContent = (
+        <Stack gap="md">
+            <SimpleGrid cols={{ base: 1, lg: 2, xl: 3 }} spacing="sm">
+                <DemoCard title="StickyHeader + HeaderControls" description="Header like dashboard pages">
                     <StickyHeader>
                         <Group justify="space-between" px="md" py="xs">
                             <Group>
-                                <Text fw={700}>StickyHeader</Text>
-                                <UnderlineShape c="cyan.4" size={64} />
+                                <Text fw={700}>Dashboard header</Text>
+                                <UnderlineShape c="cyan.4" size={72} />
                             </Group>
                             <HeaderControls
                                 githubLink="https://github.com/localzet/ui-kit"
@@ -190,360 +274,483 @@ export function App() {
                             />
                         </Group>
                     </StickyHeader>
+                </DemoCard>
 
-                    <div className="demo-grid">
-                        <DemoCard title="ActionCard / HelpActionIcon / PopoverWithInfo">
-                            <Stack>
-                                <ActionCard
-                                    description="Runs maintenance pipeline"
-                                    icon={<PiRocket size={18} />}
-                                    onClick={() => setLoadingProgressActive(true)}
-                                    title="Run action"
-                                    variant="light"
-                                />
-                                <Group>
-                                    <HelpActionIcon onClick={() => setDrawerOpened(true)} />
-                                    <PopoverWithInfo text="Reusable tooltip-like popover." />
-                                </Group>
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="CopyableField / CopyableArea / CopyableCodeBlock">
-                            <Stack>
-                                <CopyableField label="Token" value="sk_live_xxx_123" />
-                                <CopyableArea label="YAML" value={'proxy:\n  mode: rule\n  dns: true'} />
-                                <CopyableCodeBlock
-                                    inputWrapperProps={{ label: 'Command' }}
-                                    value="npm run deploy"
-                                />
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="CreateableTagInput / ChipMultiSelect / CheckboxCard">
-                            <Stack>
-                                <CreateableTagInput
-                                    onChange={setTagValue}
-                                    tags={['BASIC', 'PRO', 'ENTERPRISE']}
-                                    value={tagValue}
-                                />
-                                <ChipMultiSelect
-                                    data={[
-                                        { value: 'metrics', label: 'Metrics', icon: <PiChartBar /> },
-                                        { value: 'users', label: 'Users', icon: <PiUsers /> },
-                                        { value: 'config', label: 'Config', icon: <PiSliders /> }
-                                    ]}
-                                    label="Visible blocks"
-                                    onChange={setChipValues}
-                                    value={chipValues}
-                                />
-                                <CheckboxCard
-                                    checked={checkboxChecked}
-                                    description="Feature flag for beta controls"
-                                    label="Enable Beta"
-                                    onClick={() => setCheckboxChecked((current) => !current)}
-                                />
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="InfoField / CountryFlag / LanguagePicker">
-                            <Stack>
-                                <InfoField label="Current plan" value={<Badge color="teal">PRO</Badge>} />
-                                <Group>
-                                    <Text size="sm">Country:</Text>
-                                    <CountryFlag countryCode="RU" />
-                                    <CountryFlag countryCode="US" />
-                                    <CountryFlag countryCode="DE" />
-                                </Group>
-                                <LanguagePicker />
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="MetricCard / MetricWithTrend">
-                            <Stack>
-                                <SimpleGrid cols={2}>
-                                    <MetricWithTrend
-                                        difference={+18}
-                                        icon={<PiChartBar size={20} />}
-                                        period="vs previous week"
-                                        title="Requests"
-                                        value="18.2k"
-                                    />
-                                    <MetricCard.Root>
-                                        <Stack>
-                                            <Group justify="space-between">
-                                                <MetricCard.TextMuted>Bandwidth</MetricCard.TextMuted>
-                                                <MetricCard.Icon c="cyan.6">
-                                                    <PiCloud size={20} />
-                                                </MetricCard.Icon>
-                                            </Group>
-                                            <MetricCard.TextEmphasis>2.4 TB</MetricCard.TextEmphasis>
-                                            <MetricCard.TextTrend value={-4}>last month</MetricCard.TextTrend>
-                                        </Stack>
-                                    </MetricCard.Root>
-                                </SimpleGrid>
-
-                                <MetricCard.BarChart
-                                    barProps={{ radius: 4 }}
-                                    data={chartData}
-                                    dataKey="month"
-                                    h={180}
-                                    series={[{ name: 'traffic', color: 'cyan.6' }]}
-                                />
-
-                                <Group justify="center">
-                                    <MetricCard.RingProgress
-                                        label="72%"
-                                        sections={[{ value: 72, color: 'teal.6' }]}
-                                        size={120}
-                                        thickness={12}
-                                    />
-                                </Group>
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="SettingsCard / SectionCard">
-                            <Stack>
-                                <SettingsCardContainer>
-                                    <SettingsCardHeader
-                                        description="Reusable block for dashboard settings"
-                                        icon={<PiGear size={18} />}
-                                        title="SettingsCard"
-                                    />
-                                    <SettingsCardContent>
-                                        <TextInput label="Project name" placeholder="localzet-admin" />
-                                    </SettingsCardContent>
-                                    <SettingsCardBottom>
-                                        <Group justify="flex-end" mt="md">
-                                            <Button size="xs" variant="light">
-                                                Save
-                                            </Button>
-                                        </Group>
-                                    </SettingsCardBottom>
-                                </SettingsCardContainer>
-
-                                <SectionCard.Root>
-                                    <SectionCard.Section>
-                                        <Text fw={600}>Section A</Text>
-                                        <Text c="dimmed" size="sm">
-                                            Compose page blocks with dividers.
-                                        </Text>
-                                    </SectionCard.Section>
-                                    <SectionCard.Section>
-                                        <Text fw={600}>Section B</Text>
-                                    </SectionCard.Section>
-                                </SectionCard.Root>
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="TableContainer / TableCardTitle / TableContent">
-                            <TableContainer>
-                                <TableCardTitle
-                                    description="Card header for table widgets"
-                                    icon={<PiList size={18} />}
-                                    title="Nodes"
-                                />
-                                <TableContent p="md">
-                                    <ScrollArea>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                            <thead>
-                                                <tr>
-                                                    <th align="left">Name</th>
-                                                    <th align="left">Status</th>
-                                                    <th align="left">Uptime</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <tr>
-                                                    <td>Node Alpha</td>
-                                                    <td>
-                                                        <Badge color="teal">Active</Badge>
-                                                    </td>
-                                                    <td>14d</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Node Beta</td>
-                                                    <td>
-                                                        <Badge color="gray">Offline</Badge>
-                                                    </td>
-                                                    <td>2d</td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </ScrollArea>
-                                </TableContent>
-                            </TableContainer>
-                        </DemoCard>
-
-                        <DemoCard title="SidebarLogo / SidebarTitle / HeaderControl">
-                            <Stack>
-                                <Group>
-                                    <SidebarLogo
-                                        customLogo={
-                                            <ActionIcon color="cyan" radius="md" size="xl" variant="light">
-                                                <PiLayout size={18} />
-                                            </ActionIcon>
-                                        }
-                                    />
-                                    <SidebarTitle
-                                        title={[
-                                            { text: 'Local', color: 'cyan.4' },
-                                            { text: 'zet', color: 'white' }
-                                        ]}
-                                    />
-                                </Group>
-
-                                <Group>
-                                    <HeaderControl>
-                                        <PiCopy size={18} />
-                                    </HeaderControl>
-                                    <HeaderControl>
-                                        <PiArrowClockwise size={18} />
-                                    </HeaderControl>
-                                    <HeaderControl>
-                                        <PiCode size={18} />
-                                    </HeaderControl>
-                                </Group>
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="EntityCard">
-                            <EntityCard.Root>
-                                <EntityCard.Header>
-                                    <EntityCard.Icon>
-                                        <TbServer size={18} />
-                                    </EntityCard.Icon>
-                                    <EntityCard.Content
-                                        subtitle="UUID: aa32-992f"
-                                        title="Gateway Node"
-                                    >
-                                        <Text c="dimmed" size="xs">
-                                            region: eu-central
-                                        </Text>
-                                    </EntityCard.Content>
-                                </EntityCard.Header>
-
-                                <EntityCard.Actions>
-                                    <EntityCard.Button leftSection={<PiCheckCircle size={14} />}>
-                                        Open
-                                    </EntityCard.Button>
-                                    <EntityCard.Menu>
-                                        <Menu.Item leftSection={<PiDatabase size={14} />}>
-                                            Details
-                                        </Menu.Item>
-                                        <Menu.Item color="red" leftSection={<PiLightning size={14} />}>
-                                            Restart
-                                        </Menu.Item>
-                                    </EntityCard.Menu>
-                                </EntityCard.Actions>
-                            </EntityCard.Root>
-                        </DemoCard>
-
-                        <DemoCard title="BaseOverlayHeader / ShimmerSkeleton">
-                            <Stack>
-                                <BaseOverlayHeader
-                                    IconComponent={TbStack2}
-                                    countryCode="DE"
-                                    iconVariant="light"
-                                    subtitle="overlay metadata"
-                                    title="Overlay title"
-                                    withCopy
-                                />
-                                <Group>
-                                    <ShimmerSkeleton height={18} width="100%" />
-                                </Group>
-                                <Group>
-                                    <ShimmerSkeleton height={14} width="60%" />
-                                    <ShimmerSkeleton height={14} width="30%" />
-                                </Group>
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="VirtualizedDndGrid">
-                            <Box h={280}>
-                                <VirtualizedDndGrid
-                                    items={items}
-                                    onReorder={setItems}
-                                    renderDragOverlay={(item) => (
-                                        <Paper p="sm" radius="md" withBorder>
-                                            <Text>{item.title}</Text>
-                                        </Paper>
-                                    )}
-                                    renderItem={(item) => (
-                                        <Paper p="sm" radius="md" withBorder>
-                                            <Group justify="space-between">
-                                                <Text fw={600}>{item.title}</Text>
-                                                <Badge color={item.status === 'active' ? 'teal' : 'gray'}>
-                                                    {item.status}
-                                                </Badge>
-                                            </Group>
-                                        </Paper>
-                                    )}
-                                    style={{ height: 260 }}
-                                    useWindowScroll={false}
-                                />
-                            </Box>
-                        </DemoCard>
-
-                        <DemoCard title="Layouts: Page / EmptyPage">
-                            <Stack>
-                                <Paper p="md" radius="md" withBorder>
-                                    <Page appName="Demo" title="Layout preview">
-                                        <Text size="sm">Page sets document title and wraps content.</Text>
-                                    </Page>
-                                </Paper>
-
-                                <Paper h={220} withBorder>
-                                    <EmptyPage
-                                        action={<Button size="xs">Create entity</Button>}
-                                        description="Use as a reusable empty-state layout."
-                                        icon={<PiInfo size={24} />}
-                                        title="No data yet"
-                                    />
-                                </Paper>
-                            </Stack>
-                        </DemoCard>
-
-                        <DemoCard title="Loading components">
-                            <Stack>
-                                <Button
-                                    leftSection={<PiArrowClockwise size={16} />}
-                                    onClick={() => setLoadingProgressActive(true)}
-                                    size="xs"
-                                    variant="light"
-                                >
-                                    Trigger LoadingProgress
+                <DemoCard title="PageHeader" description="Top section heading with actions">
+                    <PageHeader
+                        actions={
+                            <Group>
+                                <Button size="xs" variant="light">
+                                    Secondary
                                 </Button>
-                                <LoaderModal mih={110} text="Preparing request..." />
-                                <LoadingScreen height="220px" text="Loading dashboard blocks..." value={66} />
-                            </Stack>
-                        </DemoCard>
+                                <Button size="xs">Primary</Button>
+                            </Group>
+                        }
+                        description="Use as page title block"
+                        icon={<PiSquaresFour size={18} />}
+                        mb={0}
+                        title="Foundations"
+                    />
+                </DemoCard>
 
-                        <DemoCard title="Overlays: MobileWarningOverlay / LandscapeBanner">
-                            <Stack>
-                                <Button onClick={() => setMobileOverlayOpened(true)} size="xs" variant="light">
-                                    Open MobileWarningOverlay
-                                </Button>
-                                <Button
-                                    onClick={() => setShowLandscapePreview(true)}
-                                    size="xs"
-                                    variant="light"
-                                >
-                                    Preview LandscapeBanner (2.5s)
-                                </Button>
+                <DemoCard title="Sidebar pieces" description="Logo and title parts">
+                    <Stack>
+                        <Group>
+                            <SidebarLogo
+                                customLogo={
+                                    <ActionIcon color="cyan" radius="md" size="xl" variant="light">
+                                        <PiLayout size={18} />
+                                    </ActionIcon>
+                                }
+                            />
+                            <SidebarTitle
+                                title={[
+                                    { text: 'Local', color: 'cyan.4' },
+                                    { text: 'zet', color: 'white' }
+                                ]}
+                            />
+                        </Group>
+                        <Group>
+                            <HeaderControl>
+                                <PiCopy size={18} />
+                            </HeaderControl>
+                            <HeaderControl>
+                                <PiArrowClockwise size={18} />
+                            </HeaderControl>
+                            <HeaderControl>
+                                <PiCode size={18} />
+                            </HeaderControl>
+                        </Group>
+                    </Stack>
+                </DemoCard>
+
+                <DemoCard title="Language + Country + Helper" description="Global controls and micro UI">
+                    <Stack>
+                        <LanguagePicker />
+                        <Group>
+                            <Text size="sm">Country:</Text>
+                            <CountryFlag countryCode="RU" />
+                            <CountryFlag countryCode="US" />
+                            <CountryFlag countryCode="DE" />
+                        </Group>
+                        <Group>
+                            <HelpActionIcon onClick={() => setDrawerOpened(true)} />
+                            <PopoverWithInfo text="Reusable tooltip-like popover." />
+                        </Group>
+                    </Stack>
+                </DemoCard>
+            </SimpleGrid>
+        </Stack>
+    )
+
+    const formsContent = (
+        <Stack gap="md">
+            <SimpleGrid cols={{ base: 1, lg: 2, xl: 3 }} spacing="sm">
+                <DemoCard title="CopyableField / Area / Code" description="Clipboard-ready values">
+                    <Stack>
+                        <CopyableField label="Token" value="sk_live_xxx_123" />
+                        <CopyableArea label="YAML" value={'proxy:\n  mode: rule\n  dns: true'} />
+                        <CopyableCodeBlock
+                            inputWrapperProps={{ label: 'Command' }}
+                            value="npm run deploy"
+                        />
+                    </Stack>
+                </DemoCard>
+
+                <DemoCard title="CreateableTagInput" description="Tag selector with create mode">
+                    <CreateableTagInput
+                        onChange={setTagValue}
+                        tags={['BASIC', 'PRO', 'ENTERPRISE']}
+                        value={tagValue}
+                    />
+                </DemoCard>
+
+                <DemoCard title="ChipMultiSelect" description="Compact multiselect card list">
+                    <ChipMultiSelect
+                        data={[
+                            { value: 'metrics', label: 'Metrics', icon: <PiChartBar /> },
+                            { value: 'users', label: 'Users', icon: <PiUsers /> },
+                            { value: 'config', label: 'Config', icon: <PiSliders /> }
+                        ]}
+                        label="Visible blocks"
+                        onChange={setChipValues}
+                        value={chipValues}
+                    />
+                </DemoCard>
+
+                <DemoCard title="CheckboxCard + InfoField" description="Boolean options + metadata">
+                    <Stack>
+                        <CheckboxCard
+                            checked={checkboxChecked}
+                            description="Feature flag for beta controls"
+                            label="Enable Beta"
+                            onClick={() => setCheckboxChecked((current) => !current)}
+                        />
+                        <InfoField label="Current plan" value={<Badge color="teal">PRO</Badge>} />
+                    </Stack>
+                </DemoCard>
+            </SimpleGrid>
+        </Stack>
+    )
+
+    const analyticsContent = (
+        <Stack gap="md">
+            <SimpleGrid cols={{ base: 1, lg: 2, xl: 3 }} spacing="sm">
+                <DemoCard title="MetricWithTrend">
+                    <MetricWithTrend
+                        difference={+18}
+                        icon={<PiChartBar size={20} />}
+                        period="vs previous week"
+                        title="Requests"
+                        value="18.2k"
+                    />
+                </DemoCard>
+
+                <DemoCard title="MetricCard compound API">
+                    <MetricCard.Root>
+                        <Stack>
+                            <Group justify="space-between">
+                                <MetricCard.TextMuted>Bandwidth</MetricCard.TextMuted>
+                                <MetricCard.Icon c="cyan.6">
+                                    <PiCloud size={20} />
+                                </MetricCard.Icon>
+                            </Group>
+                            <MetricCard.TextEmphasis>2.4 TB</MetricCard.TextEmphasis>
+                            <MetricCard.TextTrend value={-4}>last month</MetricCard.TextTrend>
+                        </Stack>
+                    </MetricCard.Root>
+                </DemoCard>
+
+                <DemoCard title="MetricCard RingProgress">
+                    <Group justify="center">
+                        <MetricCard.RingProgress
+                            label="72%"
+                            sections={[{ value: 72, color: 'teal.6' }]}
+                            size={120}
+                            thickness={12}
+                        />
+                    </Group>
+                </DemoCard>
+            </SimpleGrid>
+
+            <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="sm">
+                <DemoCard title="MetricCard BarChart">
+                    <MetricCard.BarChart
+                        barProps={{ radius: 4 }}
+                        data={chartData}
+                        dataKey="month"
+                        h={220}
+                        series={[{ name: 'traffic', color: 'cyan.6' }]}
+                    />
+                </DemoCard>
+
+                <DemoCard title="TableContainer / TableCardTitle / TableContent">
+                    <TableContainer>
+                        <TableCardTitle
+                            description="Card header for table widgets"
+                            icon={<PiList size={18} />}
+                            title="Nodes"
+                        />
+                        <TableContent p="md">
+                            <ScrollArea>
+                                <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                                    <thead>
+                                        <tr>
+                                            <th align="left">Name</th>
+                                            <th align="left">Status</th>
+                                            <th align="left">Uptime</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Node Alpha</td>
+                                            <td>
+                                                <Badge color="teal">Active</Badge>
+                                            </td>
+                                            <td>14d</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Node Beta</td>
+                                            <td>
+                                                <Badge color="gray">Offline</Badge>
+                                            </td>
+                                            <td>2d</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </ScrollArea>
+                        </TableContent>
+                    </TableContainer>
+                </DemoCard>
+            </SimpleGrid>
+
+            <SimpleGrid cols={{ base: 1, xl: 2 }} spacing="sm">
+                <DemoCard title="EntityCard">
+                    <EntityCard.Root>
+                        <EntityCard.Header>
+                            <EntityCard.Icon>
+                                <TbServer size={18} />
+                            </EntityCard.Icon>
+                            <EntityCard.Content subtitle="UUID: aa32-992f" title="Gateway Node">
                                 <Text c="dimmed" size="xs">
-                                    LandscapeBanner is fullscreen by design, preview auto-hides.
+                                    region: eu-central
                                 </Text>
-                            </Stack>
-                        </DemoCard>
-                    </div>
-                </Stack>
+                            </EntityCard.Content>
+                        </EntityCard.Header>
+
+                        <EntityCard.Actions>
+                            <EntityCard.Button leftSection={<PiCheckCircle size={14} />}>
+                                Open
+                            </EntityCard.Button>
+                            <EntityCard.Menu>
+                                <Menu.Item leftSection={<PiDatabase size={14} />}>Details</Menu.Item>
+                                <Menu.Item color="red" leftSection={<PiLightning size={14} />}>
+                                    Restart
+                                </Menu.Item>
+                            </EntityCard.Menu>
+                        </EntityCard.Actions>
+                    </EntityCard.Root>
+                </DemoCard>
+
+                <DemoCard title="VirtualizedDndGrid">
+                    <Box h={320}>
+                        <VirtualizedDndGrid
+                            items={items}
+                            onReorder={setItems}
+                            renderDragOverlay={(item) => (
+                                <Paper p="sm" radius="md" withBorder>
+                                    <Text>{item.title}</Text>
+                                </Paper>
+                            )}
+                            renderItem={(item) => (
+                                <Paper p="sm" radius="md" withBorder>
+                                    <Group justify="space-between">
+                                        <Text fw={600}>{item.title}</Text>
+                                        <Badge color={item.status === 'active' ? 'teal' : 'gray'}>
+                                            {item.status}
+                                        </Badge>
+                                    </Group>
+                                </Paper>
+                            )}
+                            style={{ height: 300 }}
+                            useWindowScroll={false}
+                        />
+                    </Box>
+                </DemoCard>
+            </SimpleGrid>
+        </Stack>
+    )
+
+    const overlaysContent = (
+        <Stack gap="md">
+            <SimpleGrid cols={{ base: 1, lg: 2, xl: 3 }} spacing="sm">
+                <DemoCard title="ActionCard + Popover + Help">
+                    <Stack>
+                        <ActionCard
+                            description="Runs maintenance pipeline"
+                            icon={<PiRocket size={18} />}
+                            onClick={() => setLoadingProgressActive(true)}
+                            title="Run action"
+                            variant="light"
+                        />
+                        <Group>
+                            <HelpActionIcon onClick={() => setDrawerOpened(true)} />
+                            <PopoverWithInfo text="Reusable tooltip-like popover." />
+                        </Group>
+                    </Stack>
+                </DemoCard>
+
+                <DemoCard title="LoaderModal + LoadingScreen">
+                    <Stack>
+                        <LoaderModal mih={110} text="Preparing request..." />
+                        <LoadingScreen height="240px" text="Loading dashboard blocks..." value={66} />
+                    </Stack>
+                </DemoCard>
+
+                <DemoCard title="LoadingProgress + ShimmerSkeleton">
+                    <Stack>
+                        <Button
+                            leftSection={<PiArrowClockwise size={16} />}
+                            onClick={() => setLoadingProgressActive(true)}
+                            size="xs"
+                            variant="light"
+                        >
+                            Trigger LoadingProgress
+                        </Button>
+                        <ShimmerSkeleton height={18} width="100%" />
+                        <Group>
+                            <ShimmerSkeleton height={14} width="60%" />
+                            <ShimmerSkeleton height={14} width="30%" />
+                        </Group>
+                    </Stack>
+                </DemoCard>
+
+                <DemoCard title="Overlay banners">
+                    <Stack>
+                        <Button onClick={() => setMobileOverlayOpened(true)} size="xs" variant="light">
+                            Open MobileWarningOverlay
+                        </Button>
+                        <Button onClick={() => setShowLandscapePreview(true)} size="xs" variant="light">
+                            Preview LandscapeBanner (2.5s)
+                        </Button>
+                    </Stack>
+                </DemoCard>
+            </SimpleGrid>
+        </Stack>
+    )
+
+    const layoutsContent = (
+        <Stack gap="md">
+            <SimpleGrid cols={{ base: 1, lg: 2, xl: 3 }} spacing="sm">
+                <DemoCard title="SettingsCard">
+                    <SettingsCardContainer>
+                        <SettingsCardHeader
+                            description="Reusable block for dashboard settings"
+                            icon={<PiGear size={18} />}
+                            title="Settings"
+                        />
+                        <SettingsCardContent>
+                            <TextInput label="Project name" placeholder="localzet-admin" />
+                        </SettingsCardContent>
+                        <SettingsCardBottom>
+                            <Group justify="flex-end" mt="md">
+                                <Button size="xs" variant="light">
+                                    Save
+                                </Button>
+                            </Group>
+                        </SettingsCardBottom>
+                    </SettingsCardContainer>
+                </DemoCard>
+
+                <DemoCard title="SectionCard">
+                    <SectionCard.Root>
+                        <SectionCard.Section>
+                            <Text fw={600}>Section A</Text>
+                            <Text c="dimmed" size="sm">
+                                Compose page blocks with dividers.
+                            </Text>
+                        </SectionCard.Section>
+                        <SectionCard.Section>
+                            <Text fw={600}>Section B</Text>
+                        </SectionCard.Section>
+                    </SectionCard.Root>
+                </DemoCard>
+
+                <DemoCard title="BaseOverlayHeader">
+                    <BaseOverlayHeader
+                        IconComponent={TbStack2}
+                        countryCode="DE"
+                        iconVariant="light"
+                        subtitle="overlay metadata"
+                        title="Overlay title"
+                        withCopy
+                    />
+                </DemoCard>
+
+                <DemoCard title="Page layout">
+                    <Paper p="md" radius="md" withBorder>
+                        <Page appName="Demo" title="Layout preview">
+                            <Text size="sm">Page sets document title and wraps content.</Text>
+                        </Page>
+                    </Paper>
+                </DemoCard>
+
+                <DemoCard title="EmptyPage layout">
+                    <Paper h={220} withBorder>
+                        <EmptyPage
+                            action={<Button size="xs">Create entity</Button>}
+                            description="Use as a reusable empty-state layout."
+                            icon={<PiInfo size={24} />}
+                            title="No data yet"
+                        />
+                    </Paper>
+                </DemoCard>
+            </SimpleGrid>
+        </Stack>
+    )
+
+    const contentByPage: Record<DemoPageKey, React.ReactNode> = {
+        foundations: foundationsContent,
+        forms: formsContent,
+        analytics: analyticsContent,
+        overlays: overlaysContent,
+        layouts: layoutsContent
+    }
+
+    return (
+        <div className="demo-shell">
+            <LoadingProgress start={loadingProgressActive} />
+
+            <Page appName="Localzet UI Kit" title={`${pageMeta.title} Demo`}>
+                <AppShell
+                    header={{ height: 64 }}
+                    navbar={{
+                        width: 280,
+                        breakpoint: 'md',
+                        collapsed: { mobile: !mobileNavOpened }
+                    }}
+                    padding="md"
+                >
+                    <AppShell.Header>
+                        <Group className="demo-header" justify="space-between" px="md">
+                            <Group gap="sm">
+                                <Burger
+                                    hiddenFrom="md"
+                                    onClick={mobileNavHandlers.toggle}
+                                    opened={mobileNavOpened}
+                                    size="sm"
+                                />
+                                <ActionIcon color="cyan" radius="md" size="lg" variant="light">
+                                    <PiWaveSine size={18} />
+                                </ActionIcon>
+                                <div>
+                                    <Title order={4}>Localzet UI Kit Showcase</Title>
+                                    <Text c="dimmed" size="xs">
+                                        {pageMeta.description}
+                                    </Text>
+                                </div>
+                            </Group>
+
+                            <Group>
+                                <Button onClick={() => setModalOpened(true)} size="xs" variant="light">
+                                    Modal demo
+                                </Button>
+                                <Button onClick={() => setDrawerOpened(true)} size="xs" variant="light">
+                                    Drawer demo
+                                </Button>
+                            </Group>
+                        </Group>
+                    </AppShell.Header>
+
+                    <AppShell.Navbar>
+                        <AppShell.Section>
+                            <div className="demo-nav-title">
+                                <Text fw={700} size="sm">
+                                    Components
+                                </Text>
+                            </div>
+                            {nav}
+                        </AppShell.Section>
+                    </AppShell.Navbar>
+
+                    <AppShell.Main>
+                        <Stack gap="md">
+                            <PageHeader
+                                description={pageMeta.description}
+                                icon={<PiSquaresFour size={18} />}
+                                title={pageMeta.title}
+                            />
+                            {contentByPage[activePage]}
+                        </Stack>
+                    </AppShell.Main>
+                </AppShell>
             </Page>
 
             <Modal
                 opened={modalOpened}
                 onClose={() => setModalOpened(false)}
-                title="Modal + ModalFooter"
                 size="lg"
+                title="Modal + ModalFooter"
             >
                 <Stack>
                     <Text size="sm">This dialog demonstrates sticky footer actions.</Text>
@@ -560,9 +767,9 @@ export function App() {
             <Drawer
                 opened={drawerOpened}
                 onClose={() => setDrawerOpened(false)}
-                title="Drawer + DrawerFooter"
                 position="right"
                 size="md"
+                title="Drawer + DrawerFooter"
             >
                 <Stack>
                     <Text size="sm">Drawer action area is pinned at the bottom.</Text>

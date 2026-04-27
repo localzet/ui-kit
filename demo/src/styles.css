@@ -13,21 +13,53 @@ body {
     color: #c9d1d9;
 }
 
-.demo-shell {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 24px;
+#root {
+    min-height: 100vh;
 }
 
-.demo-grid {
-    display: grid;
-    gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+.demo-shell {
+    min-height: 100vh;
+}
+
+.demo-header {
+    min-height: 64px;
+}
+
+.demo-nav-title {
+    padding: 14px 16px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.demo-nav-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border-radius: 10px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    background: transparent;
+    transition: 120ms ease;
+}
+
+.demo-nav-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.demo-nav-item[data-active='true'] {
+    background: rgba(6, 182, 212, 0.12);
+    border-color: rgba(6, 182, 212, 0.35);
 }
 
 .demo-preview {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 12px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.02);
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.015);
+}
+
+@media (max-width: 48em) {
+    .demo-header {
+        padding-right: 8px;
+    }
 }
