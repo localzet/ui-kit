@@ -25,6 +25,8 @@
   "scripts": {
     "build": "tsc && vite build",
     "dev": "vite build --watch",
+    "docs:dev": "vite --config vite.docs.config.ts",
+    "docs:build": "vite build --config vite.docs.config.ts",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build"
   },
