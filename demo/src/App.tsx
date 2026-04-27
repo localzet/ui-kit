@@ -97,6 +97,7 @@ type DemoPageKey = 'analytics' | 'forms' | 'foundations' | 'layouts' | 'overlays
 
 type DemoPage = {
     description: string
+    icon: React.ReactNode
     key: DemoPageKey
     title: string
 }
@@ -105,27 +106,32 @@ const DEMO_PAGES: DemoPage[] = [
     {
         key: 'foundations',
         title: 'Foundations',
-        description: 'Navigation, page chrome and base UI primitives'
+        description: 'Navigation, page chrome and base UI primitives',
+        icon: <PiLayout size={16} />
     },
     {
         key: 'forms',
         title: 'Data Entry',
-        description: 'Inputs and selection controls'
+        description: 'Inputs and selection controls',
+        icon: <PiSliders size={16} />
     },
     {
         key: 'analytics',
         title: 'Analytics & Data',
-        description: 'Metrics, cards, tables and sortable collections'
+        description: 'Metrics, cards, tables and sortable collections',
+        icon: <PiChartBar size={16} />
     },
     {
         key: 'overlays',
         title: 'Feedback & Overlays',
-        description: 'Progress, modals, drawers and contextual helpers'
+        description: 'Progress, modals, drawers and contextual helpers',
+        icon: <PiInfo size={16} />
     },
     {
         key: 'layouts',
         title: 'Layouts & Empty States',
-        description: 'Page composition and structural blocks'
+        description: 'Page composition and structural blocks',
+        icon: <PiSquaresFour size={16} />
     }
 ]
 
@@ -243,12 +249,19 @@ export function App() {
                     key={page.key}
                     onClick={() => handlePageChange(page.key)}
                 >
-                    <Text fw={600} size="sm">
-                        {page.title}
-                    </Text>
-                    <Text c="dimmed" size="xs">
-                        {page.description}
-                    </Text>
+                    <Group align="flex-start" gap="xs" wrap="nowrap">
+                        <ActionIcon color="gray" radius="md" size="md" variant="subtle">
+                            {page.icon}
+                        </ActionIcon>
+                        <div>
+                            <Text fw={600} size="sm">
+                                {page.title}
+                            </Text>
+                            <Text c="dimmed" size="xs">
+                                {page.description}
+                            </Text>
+                        </div>
+                    </Group>
                 </UnstyledButton>
             ))}
         </Stack>
@@ -724,9 +737,36 @@ export function App() {
 
                     <AppShell.Navbar>
                         <AppShell.Section>
+                            <div className="demo-sidebar-brand">
+                                <Group gap="sm" wrap="nowrap">
+                                    <SidebarLogo
+                                        customLogo={
+                                            <ActionIcon
+                                                color="cyan"
+                                                radius="md"
+                                                size="xl"
+                                                variant="light"
+                                            >
+                                                <PiWaveSine size={18} />
+                                            </ActionIcon>
+                                        }
+                                    />
+                                    <div>
+                                        <SidebarTitle
+                                            title={[
+                                                { text: 'Local', color: 'cyan.4' },
+                                                { text: 'zet', color: 'white' }
+                                            ]}
+                                        />
+                                        <Text c="dimmed" size="xs">
+                                            UI Kit
+                                        </Text>
+                                    </div>
+                                </Group>
+                            </div>
                             <div className="demo-nav-title">
                                 <Text fw={700} size="sm">
-                                    Components
+                                    Основное меню
                                 </Text>
                             </div>
                             {nav}

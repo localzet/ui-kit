@@ -30,12 +30,18 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.demo-sidebar-brand {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.015);
+}
+
 .demo-nav-item {
     display: block;
     width: 100%;
     text-align: left;
     border-radius: 10px;
-    padding: 10px 12px;
+    padding: 10px;
     border: 1px solid transparent;
     background: transparent;
     transition: 120ms ease;
